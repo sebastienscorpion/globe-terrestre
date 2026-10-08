@@ -1,0 +1,31 @@
+:root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+html, body { height: 100%; margin: 0; background: #000; overflow: hidden; font-family: system-ui, sans-serif; }
+#sky { position: fixed; left: 50%; top: 50%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax;
+       animation: spin 400s linear infinite; }
+.star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--d) ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes twinkle { 0%,100% { opacity: var(--o); } 50% { opacity: .15; } }
+#globe { position: fixed; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+#globe:active { cursor: grabbing; }
+.hint { position: fixed; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: 100%; text-align: center;
+        color: #8fa3c4; font-size: 13px; letter-spacing: .05em; pointer-events: none; }
+.credits { position: fixed; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 14px;
+           display: flex; flex-direction: column; gap: 4px; }
+.credit { color: #60738f; font-size: 11px; text-decoration: none; }
+.credit:hover { color: #a9bedc; }
+#country-tooltip { position: fixed; z-index: 2; display: grid; place-items: center;
+                   width: 184px; height: 116px; overflow: hidden;
+                   border: 1px solid rgba(151, 190, 255, .55); border-radius: 12px;
+                   background: rgba(7, 18, 38, .76); color: #f2f7ff;
+                   box-shadow: 0 8px 28px rgba(0, 0, 0, .48); pointer-events: none; }
+#country-flag { position: absolute; inset: 0; display: grid; place-items: center;
+                opacity: .34; font-size: 112px; line-height: 1; filter: saturate(1.15); }
+#country-name { position: absolute; right: 0; bottom: 0; left: 0; padding: 26px 10px 10px;
+                background: linear-gradient(transparent, rgba(4, 12, 27, .96));
+                color: #fff; font-size: 15px; font-weight: 700; letter-spacing: .025em;
+                text-align: center; text-shadow: 0 1px 5px rgba(0, 0, 0, .85); }
+#country-tooltip[hidden] { display: none; }
+@media (max-width: 520px) {
+  .hint { bottom: calc(46px + env(safe-area-inset-bottom, 0px)); padding: 0 12px; width: calc(100% - 24px); }
+  .credits { left: 0; width: 100%; align-items: center; }
+}

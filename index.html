@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Globe terrestre</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="sky"></div>
+<canvas id="globe"></canvas>
+<div id="country-tooltip" role="status" aria-live="polite" hidden>
+  <span id="country-flag" aria-hidden="true"></span>
+  <span id="country-name"></span>
+</div>
+<div class="hint">Glissez horizontalement ou verticalement pour faire tourner la Terre</div>
+<div class="credits">
+  <a class="credit" href="https://visibleearth.nasa.gov/images/57752/blue-marble-land-surface-shallow-water-and-shaded-topography" target="_blank" rel="noreferrer">Texture : NASA / MODIS</a>
+  <a class="credit" href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noreferrer">Frontières : Natural Earth</a>
+</div>
+<script src="assets/countries.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
