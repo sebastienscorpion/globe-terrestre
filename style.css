@@ -14,18 +14,32 @@ html, body { height: 100%; margin: 0; background: #000; overflow: hidden; font-f
 .credit { color: #60738f; font-size: 11px; text-decoration: none; }
 .credit:hover { color: #a9bedc; }
 #country-tooltip { position: fixed; z-index: 2; display: grid; place-items: center;
-                   width: 184px; height: 116px; overflow: hidden;
-                   border: 1px solid rgba(151, 190, 255, .55); border-radius: 12px;
-                   background: rgba(7, 18, 38, .76); color: #f2f7ff;
-                   box-shadow: 0 8px 28px rgba(0, 0, 0, .48); pointer-events: none; }
-#country-flag { position: absolute; inset: 0; display: grid; place-items: center;
-                opacity: .34; font-size: 112px; line-height: 1; filter: saturate(1.15); }
+                   width: 220px; height: 138px; overflow: hidden;
+                   border: 1px solid rgba(151, 190, 255, .3); border-radius: 12px;
+                   background: rgba(7, 18, 38, .12); color: #f2f7ff;
+                   box-shadow: 0 4px 16px rgba(0, 0, 0, .16); pointer-events: none; }
+#country-flag { position: absolute; inset: 0; width: 100%; height: 100%;
+                object-fit: cover; opacity: .23; }
+#country-flag[hidden], #country-flag-fallback[hidden] { display: none; }
+#country-flag-fallback { position: absolute; inset: 0; display: grid; place-items: center;
+                         opacity: .24; font-size: 116px; line-height: 1; }
 #country-name { position: absolute; right: 0; bottom: 0; left: 0; padding: 26px 10px 10px;
-                background: linear-gradient(transparent, rgba(4, 12, 27, .96));
+                background: linear-gradient(transparent, rgba(4, 12, 27, .48));
                 color: #fff; font-size: 15px; font-weight: 700; letter-spacing: .025em;
-                text-align: center; text-shadow: 0 1px 5px rgba(0, 0, 0, .85); }
+                text-align: center; text-shadow: 0 1px 5px rgba(0, 0, 0, .95); }
 #country-tooltip[hidden] { display: none; }
+.zoom-controls { position: fixed; z-index: 3; right: 20px; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+                 display: flex; align-items: center; gap: 8px; padding: 8px;
+                 border: 1px solid rgba(151, 190, 255, .25); border-radius: 14px;
+                 background: rgba(7, 18, 38, .78); box-shadow: 0 6px 24px rgba(0, 0, 0, .35); }
+.zoom-controls button { width: 38px; height: 38px; border: 1px solid rgba(151, 190, 255, .35);
+                        border-radius: 10px; background: rgba(35, 68, 112, .6); color: #f2f7ff;
+                        font: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
+.zoom-controls button:hover { background: rgba(63, 112, 177, .8); }
+.zoom-controls button:focus-visible { outline: 2px solid #9bc6ff; outline-offset: 2px; }
+#zoom-level { min-width: 46px; color: #c7d8f0; font-size: 12px; text-align: center; }
 @media (max-width: 520px) {
-  .hint { bottom: calc(46px + env(safe-area-inset-bottom, 0px)); padding: 0 12px; width: calc(100% - 24px); }
+  .hint { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); padding: 0 12px; width: calc(100% - 24px); }
   .credits { left: 0; width: 100%; align-items: center; }
+  .zoom-controls { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
 }

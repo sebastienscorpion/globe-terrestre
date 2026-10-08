@@ -10,10 +10,17 @@
 <div id="sky"></div>
 <canvas id="globe"></canvas>
 <div id="country-tooltip" role="status" aria-live="polite" hidden>
-  <span id="country-flag" aria-hidden="true"></span>
+  <span id="country-flag-fallback" aria-hidden="true"></span>
+  <img id="country-flag" alt="">
   <span id="country-name"></span>
 </div>
 <div class="hint">Glissez horizontalement ou verticalement pour faire tourner la Terre</div>
+<div class="zoom-controls" role="group" aria-label="Zoom du globe">
+  <button type="button" data-zoom="in" aria-label="Zoom avant">+</button>
+  <span id="zoom-level" aria-live="polite">100 %</span>
+  <button type="button" data-zoom="out" aria-label="Zoom arrière">−</button>
+  <button type="button" data-zoom="reset" aria-label="Réinitialiser le zoom">↺</button>
+</div>
 <div class="credits">
   <a class="credit" href="https://visibleearth.nasa.gov/images/57752/blue-marble-land-surface-shallow-water-and-shaded-topography" target="_blank" rel="noreferrer">Texture : NASA / MODIS</a>
   <a class="credit" href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noreferrer">Frontières : Natural Earth</a>

@@ -13,8 +13,30 @@ const countries = window.countryBoundaries;
 if (!Array.isArray(countries)) throw new Error('Les frontières des pays sont introuvables.');
 const countryTooltip = document.getElementById('country-tooltip');
 const countryFlag = document.getElementById('country-flag');
+const countryFlagFallback = document.getElementById('country-flag-fallback');
 const countryName = document.getElementById('country-name');
+const zoomLevel = document.getElementById('zoom-level');
 let pointerPosition = null;
+let zoom = 1;
+let displayedCountry = null;
+const minZoom = 0.7, maxZoom = 3;
+
+function setZoom(value) {
+  zoom = Math.max(minZoom, Math.min(maxZoom, value));
+  zoomLevel.textContent = `${Math.round(zoom * 100)} %`;
+}
+
+document.querySelectorAll('[data-zoom]').forEach(button => {
+  button.addEventListener('click', () => {
+    const action = button.dataset.zoom;
+    setZoom(action === 'reset' ? 1 : zoom + (action === 'in' ? 0.25 : -0.25));
+  });
+});
+
+document.getElementById('globe').addEventListener('wheel', event => {
+  event.preventDefault();
+  setZoom(zoom + (event.deltaY < 0 ? 0.12 : -0.12));
+}, { passive: false });
 
 function flagEmoji(code) {
   if (!code || code.length !== 2) return '🌐';
@@ -48,11 +70,28 @@ function showCountryAt(longitude, latitude, clientX, clientY) {
   const country = countries.find(item => isInCountry(longitude, latitude, item));
   if (!country) {
     countryTooltip.hidden = true;
+    displayedCountry = null;
     return;
   }
 
-  countryFlag.textContent = flagEmoji(country.flag);
-  countryName.textContent = country.name;
+  if (displayedCountry !== country.name) {
+    countryName.textContent = country.name;
+    countryFlagFallback.textContent = flagEmoji(country.flag);
+    countryFlagFallback.hidden = false;
+    countryFlag.hidden = true;
+    if (country.flag) {
+      countryFlag.onload = () => {
+        countryFlag.hidden = false;
+        countryFlagFallback.hidden = true;
+      };
+      countryFlag.onerror = () => {
+        countryFlag.hidden = true;
+        countryFlagFallback.hidden = false;
+      };
+      countryFlag.src = `https://flagcdn.com/w640/${country.flag.toLowerCase()}.png`;
+    }
+    displayedCountry = country.name;
+  }
   countryTooltip.hidden = false;
   const left = Math.min(clientX + 16, innerWidth - countryTooltip.offsetWidth - 12);
   const top = Math.max(12, Math.min(clientY - countryTooltip.offsetHeight - 12,
@@ -93,6 +132,10 @@ if (!gl) {
   function drawFallback() {
     const cx = W / 2, cy = H / 2;
     fallback.clearRect(0, 0, W, H);
+    fallback.save();
+    fallback.translate(cx, cy);
+    fallback.scale(zoom, zoom);
+    fallback.translate(-cx, -cy);
     let glow = fallback.createRadialGradient(cx, cy, R * .94, cx, cy, R * 1.3);
     glow.addColorStop(0, 'rgba(90,160,255,.45)');
     glow.addColorStop(1, 'rgba(90,160,255,0)');
@@ -121,7 +164,7 @@ if (!gl) {
   }
 
   function updateFallbackCountry(x, y) {
-    const radius = Math.min(W, H) * .32;
+    const radius = Math.min(W, H) * .32 * zoom;
     const px = (x - W / 2) / radius, py = (y - H / 2) / radius;
     if (px * px + py * py > 1) {
       countryTooltip.hidden = true;
@@ -178,13 +221,15 @@ const fragmentSource = `
   uniform float u_longitude;
   uniform float u_tilt;
   uniform float u_pitch;
+  uniform float u_zoom;
+  uniform float u_time;
   uniform sampler2D u_earth;
   uniform float u_texture_ready;
 
   const float PI = 3.141592653589793;
 
   void main() {
-    vec2 point = (gl_FragCoord.xy - u_resolution * 0.5) / u_radius;
+    vec2 point = (gl_FragCoord.xy - u_resolution * 0.5) / (u_radius * u_zoom);
     float distanceFromCenter = length(point);
 
     if (distanceFromCenter > 1.0) {
@@ -208,6 +253,16 @@ const fragmentSource = `
     if (u_texture_ready > 0.5) {
       surface = texture2D(u_earth, uv).rgb;
     }
+
+    float oceanMask = smoothstep(0.15, 0.035, surface.g) *
+                      smoothstep(0.12, 0.32, surface.b) *
+                      (1.0 - smoothstep(0.08, 0.22, surface.r));
+    float flow = sin(
+      uv.x * 75.0 + sin(uv.y * 19.0 + u_time * 0.16) * 2.8 +
+      uv.y * 13.0 + u_time * 0.24
+    ) * cos(uv.y * 48.0 - uv.x * 9.0 + u_time * 0.13);
+    float currentLines = smoothstep(0.68, 0.96, flow) * oceanMask;
+    surface += vec3(0.025, 0.11, 0.17) * currentLines;
 
     vec3 lightDirection = normalize(vec3(-0.48, 0.42, 0.77));
     float diffuse = max(dot(normal, lightDirection), 0.0);
@@ -261,6 +316,8 @@ const uniforms = {
   longitude: gl.getUniformLocation(program, 'u_longitude'),
   tilt: gl.getUniformLocation(program, 'u_tilt'),
   pitch: gl.getUniformLocation(program, 'u_pitch'),
+  zoom: gl.getUniformLocation(program, 'u_zoom'),
+  time: gl.getUniformLocation(program, 'u_time'),
   textureReady: gl.getUniformLocation(program, 'u_texture_ready')
 };
 const earthTexture = gl.createTexture();
@@ -299,7 +356,7 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 
-function draw() {
+function draw(time) {
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.uniform2f(uniforms.resolution, cv.width, cv.height);
@@ -307,12 +364,14 @@ function draw() {
   gl.uniform1f(uniforms.longitude, lon0 * rad);
   gl.uniform1f(uniforms.tilt, tilt);
   gl.uniform1f(uniforms.pitch, pitch * rad);
+  gl.uniform1f(uniforms.zoom, zoom);
+  gl.uniform1f(uniforms.time, time * 0.001);
   gl.uniform1f(uniforms.textureReady, textureReady ? 1 : 0);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
 function updateGlobeCountry(x, y) {
-  const radius = Math.min(W, H) * .32;
+  const radius = Math.min(W, H) * .32 * zoom;
   const px = (x - W / 2) / radius, py = (H / 2 - y) / radius;
   const distanceSquared = px * px + py * py;
   if (distanceSquared > 1) {
@@ -334,7 +393,7 @@ function loop(time) {
     updateGlobeCountry(pointerPosition.x, pointerPosition.y);
     lastCountryCheck = time;
   }
-  draw(); requestAnimationFrame(loop);
+  draw(time); requestAnimationFrame(loop);
 }
 cv.addEventListener('webglcontextlost', event => {
   event.preventDefault();
